@@ -1,0 +1,65 @@
+name: Daily Product Crawl
+
+on:
+  schedule:
+    # 每天 UTC 6:00 (北京时间 14:00)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Puppeteer browsers
+        run: npx puppeteer browsers install chrome
+      
+      - name: Run crawler
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run crawl
+      
+      - name: Send DingTalk notification (on success)
+        if: success()
+        env:
+          DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
+          CRAWL_COUNT: ${{ env.CRAWL_COUNT }}
+          POTENTIAL_COUNT: ${{ env.POTENTIAL_COUNT }}
+        run: |
+          curl 'https://oapi.dingtalk.com/robot/send?access_token=$DINGTALK_TOKEN' \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"msgtype\": \"markdown\",
+              \"markdown\": {
+                \"title\": \"每日选品报告\",
+                \"text\": \"## 🎯 每日选品报告\\n\\n- 抓取商品数：**${CRAWL_COUNT:-0}**\\n- 潜力爆品：**${POTENTIAL_COUNT:-0}**\\n\\n[查看详情](https://your-app.vercel.app)\"
+              }
+            }"
+      
+      - name: Send DingTalk notification (on failure)
+        if: failure()
+        env:
+          DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
+        run: |
+          curl 'https://oapi.dingtalk.com/robot/send?access_token=$DINGTALK_TOKEN' \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"msgtype\": \"markdown\",
+              \"markdown\": {
+                \"title\": \"爬虫任务失败\",
+                \"text\": \"## ❌ 爬虫任务失败\\n\\n请检查 [GitHub Actions 日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"
+              }
+            }"
