@@ -54,15 +54,22 @@ export default function Dashboard() {
 
   async function fetchData() {
     try {
+      // 获取所有商品
+      const { data: allProducts, error: allError } = await supabase
+        .from('amazon_products')
+        .select('*');
+
+      if (allError) throw allError;
+
       // 获取潜力商品（3-5 星）
-      const { data: productsData, error } = await supabase
+      const { data: productsData, error: productsError } = await supabase
         .from('amazon_products')
         .select('*')
         .gte('score', 3.0)
         .order('score', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (productsError) throw productsError;
 
       // 获取 AE 匹配
       const productIds = productsData?.map((p: any) => p.id) || [];
@@ -86,21 +93,20 @@ export default function Dashboard() {
 
       setProducts(merged);
 
-      // 计算统计
-      const { data: summary } = await supabase
-        .from('daily_summary')
-        .select('*')
-        .limit(7);
+      // 直接从 amazon_products 计算统计
+      const totalProducts = allProducts?.length || 0;
+      const goodProducts = allProducts?.filter((p: any) => p.score >= 3.0).length || 0;
+      const totalMatches = matches.length;
+      const avgProfitMargin = matches.length > 0 
+        ? matches.reduce((sum, m) => sum + (m.profit_margin || 0), 0) / matches.length 
+        : 0;
 
-      if (summary && summary.length > 0) {
-        const latest = summary[0];
-        setStats({
-          totalProducts: latest.total_products || 0,
-          goodProducts: latest.good_products || 0,
-          totalMatches: latest.total_matches || 0,
-          avgProfitMargin: parseFloat(latest.avg_profit_margin) || 0
-        });
-      }
+      setStats({
+        totalProducts,
+        goodProducts,
+        totalMatches,
+        avgProfitMargin
+      });
 
     } catch (error) {
       console.error('Error fetching data:', error);
