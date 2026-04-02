@@ -9,12 +9,12 @@
  * 5. 保存到数据库
  */
 
-import { crawlSlickdeals, extractASINFromUrl } from './lib/slickdeals-scraper';
-import { scrapeAmazonProduct } from './lib/amazon-scraper';
-import { findAEMatches, calculateMatchScore } from './lib/ae-matcher';
-import { calculateProductScore, calculateProfitMargin, isPotentialProduct } from './lib/scoring';
-import { supabase } from './lib/supabase-client';
-import { proxyPool } from './lib/proxy-manager';
+import { crawlSlickdeals, extractASINFromUrl } from '../src/lib/slickdeals-scraper';
+import { scrapeAmazonProduct } from '../src/lib/amazon-scraper';
+import { findAEMatches, calculateMatchScore } from '../src/lib/ae-matcher';
+import { calculateProductScore, calculateProfitMargin, isPotentialProduct } from '../src/lib/scoring';
+import { supabase } from '../src/lib/supabase-client';
+import { proxyPool } from '../src/lib/proxy-manager';
 
 async function main() {
   console.log('🚀 Starting competitor monitoring crawl...');
