@@ -2,6 +2,10 @@
 
 > 免费实现 Slickdeals 监控 → Amazon 数据抓取 → AliExpress 货源匹配的全流程自动化
 
+## 📢 最新更新
+
+- **2026-04-02**: ✅ Vercel 部署成功，环境变量已配置
+
 ## 🎯 功能特性
 
 - ✅ **自动监控**: 每日爬取 Slickdeals Frontpage 热门交易
