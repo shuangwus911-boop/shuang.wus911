@@ -1,6 +1,8 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install --ignore-scripts",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
   "env": {
     "PUPPETEER_SKIP_DOWNLOAD": "true",
     "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
