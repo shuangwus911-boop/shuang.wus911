@@ -59,8 +59,9 @@ async function main() {
         .eq('asin', asin)
         .single();
       
-      if (existing && new Date(existing.updated_at).getTime() > Date.now() - 86400000) {
-        console.log(`⏭️  Skip ${asin}: Recently updated (${existing.updated_at})`);
+      const existingProduct = existing as any;
+      if (existingProduct && existingProduct.updated_at && new Date(existingProduct.updated_at).getTime() > Date.now() - 86400000) {
+        console.log(`⏭️  Skip ${asin}: Recently updated (${existingProduct.updated_at})`);
         continue;
       }
       
@@ -98,7 +99,7 @@ async function main() {
     
     // Step 3: 保存到数据库
     console.log('\n💾 Saving to database...');
-    const savedProducts = [];
+    const savedProducts: any[] = [];
     
     for (const product of amazonProducts) {
       const { data, error } = await supabase

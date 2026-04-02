@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase-client';
+
+// Lazy import to avoid build-time initialization
+let supabase: any = null;
 
 interface AmazonProduct {
   id: string;
@@ -40,7 +42,14 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    fetchData();
+    // Initialize Supabase client only in browser
+    import('@/lib/supabase-client').then(({ supabase: client }) => {
+      supabase = client;
+      fetchData();
+    }).catch((error) => {
+      console.error('Failed to initialize Supabase:', error);
+      setLoading(false);
+    });
   }, []);
 
   async function fetchData() {
@@ -56,7 +65,7 @@ export default function Dashboard() {
       if (error) throw error;
 
       // 获取 AE 匹配
-      const productIds = productsData?.map(p => p.id) || [];
+      const productIds = productsData?.map((p: any) => p.id) || [];
       let matches: AEMatch[] = [];
       
       if (productIds.length > 0) {
@@ -70,7 +79,7 @@ export default function Dashboard() {
       }
 
       // 合并数据
-      const merged = productsData?.map(product => ({
+      const merged = productsData?.map((product: any) => ({
         ...product,
         ae_matches: matches.filter(m => m.amazon_product_id === product.id)
       })) || [];

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Exclude scripts directory from Next.js compilation
-  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js'],
+  // Enable App Router - include all valid extensions
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
 };
 
 export default nextConfig;
