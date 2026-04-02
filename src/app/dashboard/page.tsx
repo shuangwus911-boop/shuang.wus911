@@ -17,6 +17,7 @@ interface AmazonProduct {
 
 interface AEMatch {
   id: string;
+  amazon_product_id: string;
   ae_product_id: string;
   ae_title: string;
   ae_price: number;
@@ -25,7 +26,7 @@ interface AEMatch {
 }
 
 interface PotentialProduct extends AmazonProduct {
-  ae_matches?: EMatch[];
+  ae_matches?: AEMatch[];
 }
 
 export default function Dashboard() {
@@ -56,7 +57,7 @@ export default function Dashboard() {
 
       // 获取 AE 匹配
       const productIds = productsData?.map(p => p.id) || [];
-      let matches: EMatch[] = [];
+      let matches: AEMatch[] = [];
       
       if (productIds.length > 0) {
         const { data: matchesData } = await supabase

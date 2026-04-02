@@ -173,8 +173,8 @@ export function calculateMatchScore(amazonTitle: string, aeTitle: string): numbe
   const amazonWords = new Set(amazonTitle.toLowerCase().split(/\s+/).filter(w => w.length > 3));
   const aeWords = new Set(aeTitle.toLowerCase().split(/\s+/).filter(w => w.length > 3));
   
-  const intersection = [...amazonWords].filter(w => aeWords.has(w)).length;
-  const union = new Set([...amazonWords, ...aeWords]).size;
+  const intersection = Array.from(amazonWords).filter(w => aeWords.has(w)).length;
+  const union = new Set([...Array.from(amazonWords), ...Array.from(aeWords)]).size;
   
   return union > 0 ? intersection / union : 0;
 }
