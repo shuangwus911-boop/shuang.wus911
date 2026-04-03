@@ -9,12 +9,15 @@
  * 5. 保存到数据库
  */
 
-import { crawlSlickdeals, extractASINFromUrl } from '../src/lib/slickdeals-scraper';
+import { crawlSlickdeals, resolveAmazonUrl, extractASINFromUrl } from '../src/lib/slickdeals-scraper';
 import { scrapeAmazonProduct } from '../src/lib/amazon-scraper';
 import { findAEMatches, calculateMatchScore } from '../src/lib/ae-matcher';
 import { calculateProductScore, calculateProfitMargin, isPotentialProduct } from '../src/lib/scoring';
-import { supabase } from '../src/lib/supabase-client';
+import { getServiceClient } from '../src/lib/supabase-client';
 import { proxyPool } from '../src/lib/proxy-manager';
+
+// 获取有写权限的 service 客户端
+const dbClient = getServiceClient();
 
 async function main() {
   console.log('🚀 Starting competitor monitoring crawl...');
@@ -40,20 +43,31 @@ async function main() {
     // 记录日志
     await createCrawlLog('slickdeals_crawl', 'completed', slickdealsDeals.length);
     
-    // Step 2: 提取 ASIN 并抓取 Amazon 详情
-    console.log('\n📊 Scraping Amazon product details...');
+    // Step 2: 解析 Amazon URL 并提取 ASIN，然后抓取 Amazon 详情
+    console.log('\n📊 Resolving Amazon URLs and scraping product details...');
     const amazonProducts = [];
     
     for (const deal of slickdealsDeals) {
-      const asin = extractASINFromUrl(deal.url);
+      // 先尝试从 deal URL 直接提取 ASIN
+      let asin = extractASINFromUrl(deal.url);
       
+      // 如果直接提取失败，跟随 Slickdeals 页面重定向获取 Amazon URL
       if (!asin) {
-        console.log(`⚠️  Skip ${deal.title}: No ASIN found`);
-        continue;
+        console.log(`🔗 Resolving Amazon URL for: ${deal.title.substring(0, 50)}...`);
+        const resolved = await resolveAmazonUrl(deal.url);
+        if (resolved) {
+          asin = resolved.asin;
+          console.log(`   ✅ Resolved ASIN: ${asin}`);
+        } else {
+          console.log(`   ⚠️  Skip: Could not resolve Amazon ASIN`);
+          continue;
+        }
+        // 限速：解析链接之间间隔 1 秒
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       // 检查是否已存在（避免重复抓取）
-      const { data: existing } = await supabase
+      const { data: existing } = await dbClient
         .from('amazon_products')
         .select('id, updated_at')
         .eq('asin', asin)
@@ -102,7 +116,7 @@ async function main() {
     const savedProducts: any[] = [];
     
     for (const product of amazonProducts) {
-      const { data, error } = await supabase
+      const { data, error } = await dbClient
         .from('amazon_products')
         .upsert({
           asin: product.asin,
@@ -152,7 +166,7 @@ async function main() {
         const profitMargin = calculateProfitMargin(product.price, aeProduct.salePrice);
         const matchScore = calculateMatchScore(product.title, aeProduct.title);
         
-        const { error } = await supabase
+        const { error } = await dbClient
           .from('ae_matches')
           .insert({
             amazon_product_id: product.id,
@@ -219,7 +233,7 @@ async function createCrawlLog(
   errorMessage?: string
 ) {
   try {
-    await supabase
+    await dbClient
       .from('crawl_logs')
       .insert({
         task_type: taskType,

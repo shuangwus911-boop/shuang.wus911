@@ -77,9 +77,10 @@ export class FreeProxyPool {
   getProxy(): Proxy | null {
     const available = this.proxies.filter(p => {
       const now = new Date();
-      const cooldown = p.lastUsed ? 
-        (now.getTime() - p.lastUsed.getTime()) < 300000 : true; // 5 分钟冷却
-      return p.successCount >= p.failCount && cooldown;
+      // 冷却检查：确保代理至少休息了 5 分钟才能再次使用
+      const isReady = p.lastUsed ? 
+        (now.getTime() - p.lastUsed.getTime()) >= 300000 : true; // 5 分钟冷却
+      return p.successCount >= p.failCount && isReady;
     });
 
     if (available.length === 0) return null;

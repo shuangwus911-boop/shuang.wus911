@@ -1,15 +1,54 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// 使用 NEXT_PUBLIC_ 前缀以便在浏览器端访问
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// ============================================
+// Supabase 客户端配置
+// ============================================
 
-// Create client with possibly undefined values - will fail at runtime if not set
-// but allows build to succeed
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
+// 读取环境变量，兼容两种命名方式：
+// - NEXT_PUBLIC_ 前缀: 用于前端 (Vercel 部署)
+// - 无前缀: 用于后端脚本 (GitHub Actions 爬虫)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// 环境变量校验：缺失时给出明确警告而非静默使用占位符
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    '[Supabase] Missing environment variables!\n' +
+    '  Required: NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL)\n' +
+    '  Required: NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_ANON_KEY)\n' +
+    '  Current SUPABASE_URL:', supabaseUrl ? '✅ set' : '❌ missing',
+    '\n  Current SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ set' : '❌ missing'
+  );
+}
+
+/**
+ * 前端客户端 (anon key) - 只读权限
+ * 用于 Dashboard 数据展示
+ */
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key'
 );
+
+/**
+ * 服务端客户端 (service_role key) - 完全权限
+ * 仅在爬虫脚本中使用，用于写入数据
+ * 启用 RLS 后，anon key 只有只读权限，写入操作需要 service_role key
+ */
+export function getServiceClient(): SupabaseClient {
+  if (!supabaseServiceKey) {
+    console.warn(
+      '[Supabase] SUPABASE_SERVICE_ROLE_KEY not set, falling back to anon client.\n' +
+      '  Write operations may fail if RLS is enabled.'
+    );
+    return supabase;
+  }
+  return createClient(
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseServiceKey
+  );
+}
 
 // 类型定义
 export interface AmazonProduct {

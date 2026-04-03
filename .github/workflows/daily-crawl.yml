@@ -28,24 +28,30 @@ jobs:
       
       - name: Run crawler
         env:
+          # 兼容两种命名方式，supabase-client.ts 会同时检查
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run crawl
       
       - name: Send DingTalk notification (on success)
         if: success()
         env:
           DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
-          CRAWL_COUNT: ${{ env.CRAWL_COUNT }}
-          POTENTIAL_COUNT: ${{ env.POTENTIAL_COUNT }}
         run: |
-          curl 'https://oapi.dingtalk.com/robot/send?access_token=$DINGTALK_TOKEN' \
+          if [ -z "$DINGTALK_TOKEN" ]; then
+            echo "DingTalk token not set, skipping notification"
+            exit 0
+          fi
+          curl -s 'https://oapi.dingtalk.com/robot/send?access_token='"$DINGTALK_TOKEN" \
             -H 'Content-Type: application/json' \
             -d "{
               \"msgtype\": \"markdown\",
               \"markdown\": {
                 \"title\": \"每日选品报告\",
-                \"text\": \"## 🎯 每日选品报告\\n\\n- 抓取商品数：**${CRAWL_COUNT:-0}**\\n- 潜力爆品：**${POTENTIAL_COUNT:-0}**\\n\\n[查看详情](https://your-app.vercel.app)\"
+                \"text\": \"## 每日选品报告\\n\\n爬虫任务执行成功。\\n\\n[查看详情](https://shuang-wus911-git-main-shuangwus911-boops-projects.vercel.app/dashboard)\"
               }
             }"
       
@@ -54,12 +60,16 @@ jobs:
         env:
           DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
         run: |
-          curl 'https://oapi.dingtalk.com/robot/send?access_token=$DINGTALK_TOKEN' \
+          if [ -z "$DINGTALK_TOKEN" ]; then
+            echo "DingTalk token not set, skipping notification"
+            exit 0
+          fi
+          curl -s 'https://oapi.dingtalk.com/robot/send?access_token='"$DINGTALK_TOKEN" \
             -H 'Content-Type: application/json' \
             -d "{
               \"msgtype\": \"markdown\",
               \"markdown\": {
                 \"title\": \"爬虫任务失败\",
-                \"text\": \"## ❌ 爬虫任务失败\\n\\n请检查 [GitHub Actions 日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"
+                \"text\": \"## 爬虫任务失败\\n\\n请检查 [GitHub Actions 日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"
               }
             }"

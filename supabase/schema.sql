@@ -15,7 +15,7 @@ CREATE TABLE amazon_products (
   review_count INTEGER DEFAULT 0,
   bsr_rank INTEGER DEFAULT 0,
   bsr_category VARCHAR(255),
-  score DECIMAL(3,2) DEFAULT 0 CHECK (score >= 1 AND score <= 5),
+  score DECIMAL(3,2) DEFAULT 0 CHECK (score >= 0 AND score <= 5),
   images TEXT[],
   url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -112,3 +112,30 @@ FROM amazon_products ap
 LEFT JOIN ae_matches am ON ap.id = am.amazon_product_id
 GROUP BY DATE(created_at)
 ORDER BY date DESC;
+
+-- ============================================
+-- Row Level Security (RLS) 策略
+-- anon key 只读，service_role 有完全权限
+-- ============================================
+
+ALTER TABLE amazon_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ae_matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crawl_logs ENABLE ROW LEVEL SECURITY;
+
+-- Amazon Products: anon 只读
+CREATE POLICY "anon_read_products" ON amazon_products
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "service_write_products" ON amazon_products
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- AE Matches: anon 只读
+CREATE POLICY "anon_read_matches" ON ae_matches
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "service_write_matches" ON ae_matches
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- Crawl Logs: anon 只读
+CREATE POLICY "anon_read_logs" ON crawl_logs
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "service_write_logs" ON crawl_logs
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
