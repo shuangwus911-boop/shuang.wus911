@@ -1,31 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { AmazonProduct, AEMatch } from '@/lib/supabase-client';
 
 // Lazy import to avoid build-time initialization
 let supabase: any = null;
-
-interface AmazonProduct {
-  id: string;
-  asin: string;
-  title: string;
-  price: number;
-  score: number;
-  rating: number;
-  review_count: number;
-  bsr_rank: number;
-  created_at: string;
-}
-
-interface AEMatch {
-  id: string;
-  amazon_product_id: string;
-  ae_product_id: string;
-  ae_title: string;
-  ae_price: number;
-  profit_margin: number;
-  status: string;
-}
 
 interface PotentialProduct extends AmazonProduct {
   ae_matches?: AEMatch[];
@@ -34,6 +13,7 @@ interface PotentialProduct extends AmazonProduct {
 export default function Dashboard() {
   const [products, setProducts] = useState<PotentialProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     goodProducts: 0,
@@ -48,6 +28,7 @@ export default function Dashboard() {
       fetchData();
     }).catch((error) => {
       console.error('Failed to initialize Supabase:', error);
+      setError('初始化失败：无法连接到数据库，请检查环境变量配置');
       setLoading(false);
     });
   }, []);
@@ -108,8 +89,9 @@ export default function Dashboard() {
         avgProfitMargin
       });
 
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err.message : '获取数据失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -175,7 +157,24 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {loading ? (
+          {error ? (
+            <div className="p-8 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <p className="text-red-600 font-medium">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  fetchData();
+                }}
+                className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                重试
+              </button>
+            </div>
+          ) : loading ? (
             <div className="p-8 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
               <p className="mt-2 text-gray-600">加载中...</p>
