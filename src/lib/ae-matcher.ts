@@ -53,9 +53,15 @@ export async function findAEMatches(
  */
 async function searchByText(title: string): Promise<AEProduct[]> {
   try {
-    // 使用第三方免 API 服务（有调用限制）
-    const demoKey = 'demo'; // SerpApi 提供免费额度
-    const searchUrl = `https://serpapi.com/search.json?engine=aliexpress&q=${encodeURIComponent(title)}&api_key=${demoKey}`;
+    // 使用 SerpApi 搜索 AliExpress
+    // 需要设置 SERPAPI_KEY 环境变量，否则使用 demo key（有严格限制）
+    const apiKey = process.env.SERPAPI_KEY || 'demo';
+    
+    if (apiKey === 'demo') {
+      console.warn('[AE Matcher] Using demo SerpApi key. Set SERPAPI_KEY env var for production use.');
+    }
+    
+    const searchUrl = `https://serpapi.com/search.json?engine=aliexpress&q=${encodeURIComponent(title)}&api_key=${apiKey}`;
     
     const response = await fetch(searchUrl, {
       headers: {

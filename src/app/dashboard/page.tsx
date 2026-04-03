@@ -234,29 +234,29 @@ function ProductCard({ product }: { product: PotentialProduct }) {
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
             <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              product.score >= 4.5 ? 'bg-green-100 text-green-700' :
-              product.score >= 4.0 ? 'bg-blue-100 text-blue-700' :
+              (product.score ?? 0) >= 4.5 ? 'bg-green-100 text-green-700' :
+              (product.score ?? 0) >= 4.0 ? 'bg-blue-100 text-blue-700' :
               'bg-yellow-100 text-yellow-700'
             }`}>
-              ⭐ {product.score.toFixed(2)}
+              ⭐ {((product.score ?? 0)).toFixed(2)}
             </span>
             <span className="text-xs text-gray-500">
-              ASIN: {product.asin}
+              ASIN: {product.asin || 'N/A'}
             </span>
           </div>
           
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {product.title}
+            {product.title || 'Unknown Product'}
           </h3>
           
           <div className="flex flex-wrap gap-4 text-sm text-gray-600">
             <span className="font-bold text-green-600">
-              ${product.price.toFixed(2)}
+              ${((product.price ?? 0)).toFixed(2)}
             </span>
-            <span>评分：{product.rating}⭐</span>
-            <span>评论：{product.review_count.toLocaleString()}</span>
-            {product.bsr_rank > 0 && (
-              <span>BSR: #{product.bsr_rank.toLocaleString()}</span>
+            <span>评分：{(product.rating ?? 0).toFixed(1)}⭐</span>
+            <span>评论：{(product.review_count ?? 0).toLocaleString()}</span>
+            {(product.bsr_rank ?? 0) > 0 && (
+              <span>BSR: #{(product.bsr_rank ?? 0).toLocaleString()}</span>
             )}
           </div>
 
@@ -298,13 +298,13 @@ function ProductCard({ product }: { product: PotentialProduct }) {
                     </p>
                     <div className="flex flex-wrap gap-3 text-sm">
                       <span className="font-bold text-green-600">
-                        ${match.ae_price.toFixed(2)}
+                        ${((match.ae_price ?? 0)).toFixed(2)}
                       </span>
                       <span className="text-green-600 font-semibold">
-                        利润：{match.profit_margin?.toFixed(1)}%
+                        利润：{((match.profit_margin ?? 0)).toFixed(1)}%
                       </span>
                       <span className="text-gray-500">
-                        ID: {match.ae_product_id}
+                        ID: {match.ae_product_id || 'N/A'}
                       </span>
                     </div>
                   </div>

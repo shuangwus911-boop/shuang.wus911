@@ -160,42 +160,66 @@ export async function crawlSlickdeals(): Promise<SlickdealsDeal[]> {
     const seenUrls = new Set<string>();
 
     // 多组选择器策略，覆盖 Slickdeals 不同的页面版本
+    // 基于实际 Slickdeals 页面结构（2024-2025）
     const dealSelectors = [
+      '[data-deal-id]',
       '[data-dealid]',
+      '.deal-card',
       '.dealCard',
       '.bp-p-dealCard',
+      '.fp-item',
       '.fpItem',
+      '.deal-tile',
       '.dealTile',
       'li[id^="deal_"]',
+      '.result-row',
       '.resultRow',
-      '.dealWrapper'
+      '.deal-wrapper',
+      '.dealWrapper',
+      '.grid-deal',
+      '.list-deal'
     ];
 
     const titleSelectors = [
+      'a[data-role="dealTitle"]',
+      'a.deal-title',
       'a.bp-c-card_title',
       'a.dealTitle',
+      '.item-title a',
       '.itemTitle a',
+      '.deal-card__title a',
       '.dealCard__title a',
       'a[data-deal-title]',
+      '.deal-title a',
       'h2 a',
       'h3 a',
-      '.resultTitle a'
+      '.result-title a',
+      '.resultTitle a',
+      '.title a'
     ];
 
     const priceSelectors = [
-      '.bp-c-card_price',
-      '.dealPrice',
-      '.itemPrice',
       '.price',
-      'span[data-deal-price]'
+      '.deal-price',
+      '.dealPrice',
+      '.bp-c-card_price',
+      '.item-price',
+      '.itemPrice',
+      'span[data-deal-price]',
+      '.current-price',
+      '.sale-price'
     ];
 
     const storeSelectors = [
+      '.store',
+      '.store-name',
+      '.storeName',
       '.bp-c-card_store',
       '.dealStore',
-      '.storeName',
       '.merchant',
-      'span[data-deal-store]'
+      '.retailer',
+      'span[data-deal-store]',
+      '.deal-source'
     ];
 
     // 尝试每组选择器
